@@ -1,0 +1,16 @@
+# ide
+.idea
+
+# sbt
+dist/*
+target/
+lib_managed/
+src_managed/
+project/boot/
+project/plugins/project/
+.history
+.cache
+.lib/
+
+# OS X
+.DS_Store
