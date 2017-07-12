@@ -19,7 +19,7 @@ script:
 after_success:
   - find \$HOME/.sbt -name "*.lock" | xargs rm
   - find \$HOME/.ivy2 -name "ivydata-*.properties" | xargs rm
-  - "bash <(curl -s https://codecov.oncue.verizon.net/bash) -u https://codecov.oncue.verizon.net -r $TRAVIS_REPO_SLUG -t ee377c2d-25fd-4755-a144-887166d1b0d6"
+  # - "bash <(curl -s https://codecov.oncue.verizon.net/bash) -u https://codecov.oncue.verizon.net -r $TRAVIS_REPO_SLUG -t ee377c2d-25fd-4755-a144-887166d1b0d6"
 
 cache:
   directories:
