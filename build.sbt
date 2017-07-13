@@ -9,12 +9,10 @@ scalaVersion in Global := "2.11.8"
 
 libraryDependencies ++= Seq(
   Kafka,
+  KafkaTest,
   TreasureChest,
-  Journal
+  Journal,
+  ScalaTest
 )
 
 coverageHighlighting := true
-
-// TODO remove this asap
-coverageFailOnMinimum := false
-
