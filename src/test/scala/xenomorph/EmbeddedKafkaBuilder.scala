@@ -48,8 +48,6 @@ trait EmbeddedKafkaBuilder extends BeforeAndAfterEach { this: Suite =>
         UUID.randomUUID().toString,
         -1)
 
-    props.put("auto.commit.enable", "false")
-
     consumerConfig = new ConsumerConfig(consumerProperties)
 
     // setup producer

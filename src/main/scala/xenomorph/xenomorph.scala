@@ -28,13 +28,16 @@ package object xenomorph {
       consumerConnector.createMessageStreamsByFilter(filterSpec, numStreams, new DefaultDecoder(), decoder)
 
     val p = Process.emitAll(streams).map { stream =>
-      streamConsumer(tocc.commitOffset, tocc.consumerConnector.shutdown)(stream) through throughThenCommit
+      streamConsumer(
+        (msg: MessageAndMetadata[Array[Byte], A]) =>
+          tocc.commitOffset(TopicAndPartition(msg.topic, msg.partition), msg.offset),
+        tocc.consumerConnector.shutdown)(stream) through throughThenCommit
     }
 
     merge.mergeN(numStreams)(p)(S)
   }
 
-  def streamConsumer[B, A](commitOffset: (TopicAndPartition, Long) => Unit, shutdown: () => Unit)(
+  def streamConsumer[A, B](commitOffset: MessageAndMetadata[Array[Byte], A] => Unit, shutdown: () => Unit)(
       stream: KafkaStream[Array[Byte], A]) = {
     Process
       .bracket[Task, ConsumerIterator[Array[Byte], A], A](Task.delay(stream.iterator())) { consumer =>
@@ -65,13 +68,12 @@ package object xenomorph {
   }
 
   private def commit[T](
-      commitOffset: (TopicAndPartition, Long) => Unit,
+      commit: MessageAndMetadata[Array[Byte], T] => Unit,
       msg: MessageAndMetadata[Array[Byte], T]): Process[Task, Unit] =
     Process eval Task.delay {
       log.debug(
         s"${Thread.currentThread()} - Committing offset=${msg.offset} topic=${msg.topic} partition=${msg.partition}")
-      val tp = TopicAndPartition(msg.topic, msg.partition)
-      commitOffset(tp, msg.offset)
+      commit(msg)
     }
 
   private def logThrowable[T]: PartialFunction[Throwable \/ T, Option[T]] = {
