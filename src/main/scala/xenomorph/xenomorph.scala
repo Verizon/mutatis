@@ -14,12 +14,11 @@ import scalaz.{-\/, \/, \/-}
 package object xenomorph {
   val log = Logger[this.type]
 
-  def consumer[A, B](
+  def consumer[A](
       consumerConfig: ConsumerConfig,
       topic: String,
       decoder: Decoder[A],
-      numStreams: Int,
-      throughThenCommit: Process[Task, A => Task[B]])(implicit S: Strategy): Process[Task, B] = {
+      numStreams: Int): Process[Task, Process[Task, A]] = {
     val tocc                                 = new TopicOffsetConsumerConnector(consumerConfig)
     val consumerConnector: ConsumerConnector = tocc.consumerConnector
     val filterSpec                           = Whitelist(topic)
@@ -27,18 +26,19 @@ package object xenomorph {
     val streams =
       consumerConnector.createMessageStreamsByFilter(filterSpec, numStreams, new DefaultDecoder(), decoder)
 
-    val p = Process.emitAll(streams).map { stream =>
-      streamConsumer(
-        (msg: MessageAndMetadata[Array[Byte], A]) =>
-          tocc.commitOffset(TopicAndPartition(msg.topic, msg.partition), msg.offset),
-        tocc.consumerConnector.shutdown)(stream) through throughThenCommit
+    val commitOffset: MessageAndMetadata[Array[Byte], A] => Unit = msg => {
+      tocc.commitOffset(TopicAndPartition(msg.topic, msg.partition), msg.offset)
     }
 
-    merge.mergeN(numStreams)(p)(S)
+    val shutdown: () => Unit = tocc.consumerConnector.shutdown
+
+    Process.emitAll(streams).map { stream =>
+      streamConsumer(commitOffset, shutdown)(stream)
+    }
   }
 
   def streamConsumer[A, B](commitOffset: MessageAndMetadata[Array[Byte], A] => Unit, shutdown: () => Unit)(
-      stream: KafkaStream[Array[Byte], A]) = {
+      stream: KafkaStream[Array[Byte], A]): Process[Task, A] = {
     Process
       .bracket[Task, ConsumerIterator[Array[Byte], A], A](Task.delay(stream.iterator())) { consumer =>
         eval_(Task.delay(shutdown()))
@@ -48,10 +48,9 @@ package object xenomorph {
         })
 
         val pullFromKafka =
-          syncPoll(consumer.next).flatMap { res =>
+          syncPoll(consumer.next).map(logThrowable).collect(collectSome).flatMap { res =>
             Process
               .emit(res.message)
-              .toSource
               .onComplete(commit(commitOffset, res).drain)
           }
 
@@ -87,9 +86,9 @@ package object xenomorph {
     case Some(v) => v
   }
 
-  private def syncPoll[T](
-      blockingTask: => MessageAndMetadata[Array[Byte], T]): Process[Task, MessageAndMetadata[Array[Byte], T]] = {
-    val t = Task.delay(blockingTask)
+  private def syncPoll[T](blockingTask: => MessageAndMetadata[Array[Byte], T])
+    : Process[Task, Throwable \/ MessageAndMetadata[Array[Byte], T]] = {
+    val t = Task(\/.fromTryCatchNonFatal(blockingTask))
 
     (Process repeatEval t).onHalt(
       cause =>
