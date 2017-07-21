@@ -2,7 +2,7 @@ package xenomorph
 
 import kafka.message.MessageAndMetadata
 
-case class DecodedMessage[K, M](messageAndMetadata: MessageAndMetadata[K, M]) {
+case class DecodedEvent[K, M](messageAndMetadata: MessageAndMetadata[K, M]) {
   val key: K     = messageAndMetadata.key()
   val message: M = messageAndMetadata.message()
 }

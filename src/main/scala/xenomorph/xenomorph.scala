@@ -49,7 +49,7 @@ package object xenomorph {
         })
 
         val process: Process[Task, \/[Throwable, V]] =
-          syncPoll(DecodedMessage(consumer.next)).flatMap { message =>
+          syncPoll(DecodedEvent(consumer.next)).flatMap { message =>
             Process
               .emit(message.map(_.message))
               .onComplete((message match {
@@ -79,7 +79,7 @@ package object xenomorph {
       commit(msg)
     }
 
-  private def syncPoll[K, V](blockingTask: => DecodedMessage[K, V]): Process[Task, Throwable \/ DecodedMessage[K, V]] = {
+  private def syncPoll[K, V](blockingTask: => DecodedEvent[K, V]): Process[Task, Throwable \/ DecodedEvent[K, V]] = {
     val t = Task.delay(blockingTask).attempt
 
     (Process repeatEval t).onHalt(
