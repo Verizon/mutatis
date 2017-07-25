@@ -16,3 +16,5 @@ libraryDependencies ++= Seq(
 )
 
 coverageHighlighting := true
+
+parallelExecution in Test := false

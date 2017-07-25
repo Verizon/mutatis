@@ -2,7 +2,9 @@ import journal.Logger
 import kafka.common.TopicAndPartition
 import kafka.consumer._
 import kafka.message.MessageAndMetadata
-import kafka.serializer.{Decoder, DefaultDecoder}
+import kafka.producer.{KeyedMessage, Producer, ProducerConfig}
+import kafka.serializer.{Decoder, DefaultDecoder, Encoder}
+import org.apache.kafka.clients.producer.ProducerRecord
 
 import scalaz.concurrent._
 import scalaz.stream._
@@ -88,5 +90,31 @@ package object xenomorph {
           log.info(s"Polling from kafka was halted by [$cause]")
         })
     )
+  }
+
+  def producer[A](cfg: ProducerConfig,
+                  topic: String, keyEncoder: Encoder[A],
+                  msgEncoder: Encoder[A]): Sink[Task, A] = {
+    val producer = new Producer[Array[Byte], Array[Byte]](cfg)
+
+    val producerProcess = sink.lift[Task, A] { a: A =>
+      Task.delay[Unit] {
+        log.info(s"${Thread.currentThread()} sending event -  $a")
+
+        producer.send(
+          new KeyedMessage[Array[Byte], Array[Byte]](
+            topic,
+            keyEncoder.toBytes(a),
+            msgEncoder.toBytes(a)))
+      }
+    }.onComplete {
+      Process.suspend{
+        log.info("End of stream. Closing producer")
+        producer.close
+        Process.halt
+      }
+    }
+
+    producerProcess
   }
 }
