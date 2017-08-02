@@ -36,17 +36,17 @@ class ConsumerSpec extends UnitSpec with EmbeddedKafkaBuilder {
     "should consume message in order produced" in {
       produce()
 
-      val dataStoreSink: Sink[Task, String] = sink.lift { s =>
+      val dataStoreSink: Sink[Task, DecodedEvent[Bytes, String]] = sink.lift { s =>
         Task.delay {
           val data = dataStore.get()
-          dataStore.set(data :+ s.reverse)
+          dataStore.set(data :+ s.message.reverse)
           ()
         }
       }
 
       consumer[Bytes, String](consumerConfig, topic, bytesDecoder, stringDecoder, 1).flatMap { s =>
-        s.collect { case \/-(a) => a } through dataStoreSink
-      }.take(messages.size).runLog.run
+        s through dataStoreSink
+      }.take(messages.size).runLog.attempt.run
 
       dataStore.get shouldEqual data.map(_._2.reverse)
     }
@@ -62,8 +62,8 @@ class ConsumerSpec extends UnitSpec with EmbeddedKafkaBuilder {
         .flatMap(a => a)
         .take(1)
         .runLog
+        .attempt
         .run
-        .head
 
       seq match {
         case \/-(_) => fail("should not be success")
