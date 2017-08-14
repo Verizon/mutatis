@@ -3,15 +3,12 @@ import kafka.common.TopicAndPartition
 import kafka.consumer._
 import kafka.message.MessageAndMetadata
 import kafka.producer.{KeyedMessage, Producer, ProducerConfig}
-import kafka.serializer.{Decoder, DefaultDecoder, Encoder}
-import org.apache.kafka.clients.producer.ProducerRecord
-
-import scalaz.concurrent._
-import scalaz.stream._
-import scalaz.stream.Process._
+import kafka.serializer.{Decoder, Encoder}
 import treasurechest._
 
-import scalaz.{-\/, \/, \/-}
+import scalaz.concurrent._
+import scalaz.stream.Process._
+import scalaz.stream._
 
 package object xenomorph {
   val log = Logger[this.type]
@@ -21,7 +18,7 @@ package object xenomorph {
       topic: String,
       keyDecoder: Decoder[K],
       messageDecoder: Decoder[V],
-      numStreams: Int): Process[Task, Process[Task, Throwable \/ V]] = {
+      numStreams: Int): Process[Task, Process[Task, DecodedEvent[K, V]]] = {
     val tocc                                 = new TopicOffsetConsumerConnector(consumerConfig)
     val consumerConnector: ConsumerConnector = tocc.consumerConnector
     val filterSpec                           = Whitelist(topic)
@@ -41,34 +38,23 @@ package object xenomorph {
   }
 
   def streamConsumer[K, V](commitOffset: MessageAndMetadata[K, V] => Unit, shutdown: () => Unit)(
-      stream: KafkaStream[K, V]): Process[Task, Throwable \/ V] = {
+      stream: KafkaStream[K, V]): Process[Task, DecodedEvent[K, V]] = {
     Process
-      .bracket[Task, ConsumerIterator[K, V], Throwable \/ V](Task.delay(stream.iterator())) { consumer =>
+      .bracket[Task, ConsumerIterator[K, V], DecodedEvent[K, V]](Task.delay(stream.iterator())) { consumer =>
         eval_(Task.delay(shutdown()))
       } { consumer =>
         val begin = eval_(Task delay {
           log.info(s"${Thread.currentThread()} - Start pulling records from Kafka.")
         })
 
-        val process: Process[Task, \/[Throwable, V]] =
+        val process: Process[Task, DecodedEvent[K, V]] =
           syncPoll(DecodedEvent(consumer.next)).flatMap { message =>
             Process
-              .emit(message.map(_.message))
-              .onComplete((message match {
-                case \/-(message) => commit(commitOffset, message.messageAndMetadata)
-                case -\/(_)       => Halt(Cause.End)
-              }).drain)
+              .emit(message)
+              .onComplete(commit(commitOffset, message.messageAndMetadata).drain)
           }
 
-        val end = process.onHalt(
-          cause =>
-            cause.fold(Process.empty[Task, Throwable \/ V])(c =>
-              eval_(Task.delay {
-                log.info(s"Polling from kafka was interrupted by [$c]")
-              }))
-        )
-
-        begin ++ end
+        begin ++ process
       }
   }
 
@@ -81,40 +67,30 @@ package object xenomorph {
       commit(msg)
     }
 
-  private def syncPoll[K, V](blockingTask: => DecodedEvent[K, V]): Process[Task, Throwable \/ DecodedEvent[K, V]] = {
-    val t = Task.delay(blockingTask).attempt
+  private def syncPoll[K, V](blockingTask: => DecodedEvent[K, V]): Process[Task, DecodedEvent[K, V]] = {
+    val t = Task.delay(blockingTask)
 
-    (Process repeatEval t).onHalt(
-      cause =>
-        eval_(Task.delay {
-          log.info(s"Polling from kafka was halted by [$cause]")
-        })
-    )
+    Process repeatEval t
   }
 
-  def producer[A](cfg: ProducerConfig,
-                  topic: String, keyEncoder: Encoder[A],
-                  msgEncoder: Encoder[A]): Sink[Task, A] = {
+  def producer[A](cfg: ProducerConfig, topic: String, keyEncoder: Encoder[A], msgEncoder: Encoder[A]): Sink[Task, A] = {
     val producer = new Producer[Array[Byte], Array[Byte]](cfg)
 
-    val producerProcess = sink.lift[Task, A] { a: A =>
-      Task.delay[Unit] {
-        log.info(s"${Thread.currentThread()} sending event -  $a")
+    sink
+      .lift[Task, A] { a: A =>
+        Task.delay[Unit] {
+          log.info(s"${Thread.currentThread()} sending event -  $a")
 
-        producer.send(
-          new KeyedMessage[Array[Byte], Array[Byte]](
-            topic,
-            keyEncoder.toBytes(a),
-            msgEncoder.toBytes(a)))
+          producer.send(
+            new KeyedMessage[Array[Byte], Array[Byte]](topic, keyEncoder.toBytes(a), msgEncoder.toBytes(a)))
+        }
       }
-    }.onComplete {
-      Process.suspend{
-        log.info("End of stream. Closing producer")
-        producer.close
-        Process.halt
+      .onComplete {
+        Process.suspend {
+          log.info("End of stream. Closing producer")
+          producer.close
+          Process.halt
+        }
       }
-    }
-
-    producerProcess
   }
 }
