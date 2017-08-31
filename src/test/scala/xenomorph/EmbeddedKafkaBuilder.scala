@@ -21,6 +21,7 @@ trait EmbeddedKafkaBuilder extends BeforeAndAfterEach { this: Suite =>
   var zkServer: EmbeddedZookeeper    = _
   var consumerConfig: ConsumerConfig = _
   var producerConfig: ProducerConfig = _
+  val groupId = UUID.randomUUID().toString
 
   override def beforeEach(): Unit = {
     // setup Zookeeper
@@ -43,10 +44,10 @@ trait EmbeddedKafkaBuilder extends BeforeAndAfterEach { this: Suite =>
 
     val consumerProperties =
       TestUtils.createConsumerProperties(
-        zkServer.connectString,
-        UUID.randomUUID().toString,
-        UUID.randomUUID().toString,
-        -1)
+        zkConnect = zkServer.connectString,
+        groupId = groupId,
+        consumerId = UUID.randomUUID().toString,
+        consumerTimeout = -1)
 
     consumerConfig = new ConsumerConfig(consumerProperties)
 
