@@ -4,10 +4,11 @@ import java.util.concurrent.atomic.AtomicReference
 
 import kafka.producer._
 import kafka.serializer.{Decoder, DefaultDecoder, StringDecoder}
-
+import scala.concurrent.duration.{Duration, _}
 import scalaz.{-\/, \/-}
 import scalaz.stream._
 import scalaz.concurrent.Task
+import common.KafkaTestHelper._
 
 class ConsumerSpec extends UnitSpec with EmbeddedKafkaBuilder {
   type Bytes = Array[Byte]
@@ -49,6 +50,29 @@ class ConsumerSpec extends UnitSpec with EmbeddedKafkaBuilder {
       }.take(messages.size).runLog.attempt.run
 
       dataStore.get shouldEqual data.map(_._2.reverse)
+    }
+
+    "should consume message in order produced and commit periodically" in {
+      produce()
+
+      val dataStoreSink: Sink[Task, DecodedEvent[Bytes, String]] = sink.lift { s =>
+        Task.delay {
+          val data = dataStore.get()
+          dataStore.set(data :+ s.message.reverse)
+          Thread.sleep(200)
+          ()
+        }
+      }
+
+      consumer[Bytes, String](consumerConfig, topic, bytesDecoder, stringDecoder, 1, 150.millisecond).flatMap { s =>
+        s through dataStoreSink
+      }.take(messages.size).runLog.attempt.run
+
+      // Why 14 if there we are taking 16 messages
+      // 1) Offset are 0 indexed. Now, why 15 :)
+      // 2) The connection is closed immediately after the last message is consumed.
+      // This gives no time to commit the last one
+      getOffset(zkClient, groupId, topic, 0) shouldBe "14"
     }
 
     "should handle exceptions in decoder" in {

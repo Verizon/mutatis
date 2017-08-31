@@ -6,6 +6,7 @@ class TopicOffsetConsumerConnector(consumerConfig: ConsumerConfig) {
   private val zkConnector                  = new ZookeeperConsumerConnector(consumerConfig, true)
   val consumerConnector: ConsumerConnector = zkConnector
 
-  def commitOffset(topicPartition: TopicAndPartition, offset: Long) =
+  def commitOffset(topicPartition: TopicAndPartition, offset: Long): Unit = {
     zkConnector.commitOffsetToZooKeeper(topicPartition, offset)
+  }
 }
