@@ -5,7 +5,7 @@ package xenomorph
   * process each event so it is required to load balance across multiple consumers to handle the load.
   *
   * 1. Set up kafka server:
-  *    Download and start per sk and kafka per https://kafka.apache.org/082/documentation.html#quickstart
+  *    Download and start zk and kafka per https://kafka.apache.org/082/documentation.html#quickstart
   *
   * 2. create a topic called "test8" with 8 partitions:
   *    ./bin/kafka-topics.sh --create --zookeeper localhost:2181 --replication-factor 1 --partitions 8 --topic test8
