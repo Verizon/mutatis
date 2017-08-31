@@ -12,23 +12,20 @@ These instructions will get you a copy of the project up and running on your loc
 ### Prerequisites
 
 Set up kafka server:
-Download and start zk and kafka per https://kafka.apache.org/082/documentation.html#quickstart
 
-```
-./bin/kafka-topics.sh --create --zookeeper localhost:2181 --replication-factor 1 --partitions 8 --topic test8
-```
+Download and start zk and kafka per https://kafka.apache.org/082/documentation.html#quickstart
 
 ### Installing
 
-2. create a topic called "test8" with 8 partitions:
+* create a topic called "test8" with 8 partitions:
 ```
    ./bin/kafka-topics.sh --create --zookeeper localhost:2181 --replication-factor 1 --partitions 8 --topic test8
 ```
-3. Start producer - notice one message is produced every 100 milliseconds:
+* Start producer - notice one message is produced every 100 milliseconds:
 ```
    sbt "test:run-main xenomorph.ExampleProducer"
 ```
-4. Start consumer - notice one message takes 250 milliseconds to process, one consumer is not enough:
+* Start consumer - notice one message takes 250 milliseconds to process, one consumer is not enough:
 ```
    sbt "test:run-main xenomorph.ExampleConsumer"
 ```
