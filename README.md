@@ -3,15 +3,16 @@
 [![Build Status](https://travis.oncue.verizon.net/iptv/xenomorph.svg?token=sG4K5rLKPjKXqXjsTKAM&branch=master)](https://travis.oncue.verizon.net/iptv/xenomorph)
 [![codecov](https://codecov.oncue.verizon.net/ghe/iptv/xenomorph/branch/master/graph/badge.svg)](https://codecov.oncue.verizon.net/ghe/iptv/xenomorph)
 
-Xenomorph provide Scalaz Streams wrapper for Kafka Producer and Consumer
+Xenomorph provides Scalaz Streams wrapper for Kafka Producer and Consumer
 
 ## Getting Started
 
-These instructions will get you a copy of the project up and running on your local machine for development and testing purposes. 
+These instructions will get a copy of the project up and running on your local machine for development and testing purposes. 
 
 ### Prerequisites
 
 Set up kafka server:
+
 
 Download and start zk and kafka per https://kafka.apache.org/082/documentation.html#quickstart
 
