@@ -1,11 +1,14 @@
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent._
+
 import journal.Logger
 import kafka.common.TopicAndPartition
 import kafka.consumer._
 import kafka.message.MessageAndMetadata
-import kafka.producer.{KeyedMessage, Producer, ProducerConfig}
-import kafka.serializer.{Decoder, Encoder}
+import kafka.producer.async.DefaultEventHandler
+import kafka.producer._
+import kafka.serializer.{Decoder, DefaultEncoder, Encoder, NullEncoder}
+import kafka.utils.Utils
 import treasurechest._
 
 import scala.concurrent.duration.{Duration, _}
@@ -19,8 +22,7 @@ package object xenomorph {
 
   val log = Logger[this.type]
   private implicit val pool: ScheduledExecutorService =
-    Executors.newSingleThreadScheduledExecutor(
-      daemonThreads("xenomorph-committer"))
+    Executors.newSingleThreadScheduledExecutor(daemonThreads("xenomorph-committer"))
 
   private def daemonThreads(name: String) = new ThreadFactory {
     def newThread(r: Runnable) = {
@@ -47,18 +49,12 @@ package object xenomorph {
     val filterSpec                           = Whitelist(topic)
 
     val streams =
-      consumerConnector.createMessageStreamsByFilter(
-        filterSpec,
-        numStreams,
-        keyDecoder,
-        messageDecoder)
+      consumerConnector.createMessageStreamsByFilter(filterSpec, numStreams, keyDecoder, messageDecoder)
 
     val commitOffsetMap = new ConcurrentHashMap[TopicAndPartition, Long]()
 
     val commitOffset: MessageAndMetadata[K, V] => Unit = msg => {
-      commitOffsetMap.put(
-        TopicAndPartition(msg.topic, msg.partition),
-        msg.offset)
+      commitOffsetMap.put(TopicAndPartition(msg.topic, msg.partition), msg.offset)
     }
 
     val stopCommitter: AtomicBoolean = new AtomicBoolean(false)
@@ -77,26 +73,17 @@ package object xenomorph {
       keyDecoder: Decoder[K],
       messageDecoder: Decoder[V],
       numStreams: Int,
-      refreshTime: Duration = 2.minutes): Process[
-    Task,
-    Process[Task, DecodedEvent[K, V]]] = {
+      refreshTime: Duration = 2.minutes): Process[Task, Process[Task, DecodedEvent[K, V]]] = {
     Process
-        .bracket[Task, Init[K, V], Process[Task, DecodedEvent[K, V]]](
-      Task.delay(
-        init(
-          consumerConfig,
-          topic,
-          keyDecoder,
-          messageDecoder,
-          numStreams,
-          refreshTime)))(i => eval_(Task.delay(i.stopCommitter.set(true)))) { init =>
-
-      Process
+      .bracket[Task, Init[K, V], Process[Task, DecodedEvent[K, V]]](
+        Task.delay(init(consumerConfig, topic, keyDecoder, messageDecoder, numStreams, refreshTime)))(i =>
+        eval_(Task.delay(i.stopCommitter.set(true)))) { init =>
+        Process
           .emitAll(init.streams)
           .map { stream =>
             streamConsumer(init.commitOffset, init.shutdown)(stream)
           }
-    }
+      }
   }
 
   private def commit(
@@ -113,26 +100,21 @@ package object xenomorph {
       case \/-(_) => ()
     }
 
-  private def streamConsumer[K, V](
-      commitOffset: MessageAndMetadata[K, V] => Unit,
-      shutdown: ()                           => Unit)(
+  private def streamConsumer[K, V](commitOffset: MessageAndMetadata[K, V] => Unit, shutdown: () => Unit)(
       stream: KafkaStream[K, V]): Process[Task, DecodedEvent[K, V]] = {
     Process
-      .bracket[Task, ConsumerIterator[K, V], DecodedEvent[K, V]](
-        Task.delay(stream.iterator())) { consumer =>
+      .bracket[Task, ConsumerIterator[K, V], DecodedEvent[K, V]](Task.delay(stream.iterator())) { consumer =>
         eval_(Task.delay(shutdown()))
       } { consumer =>
         val begin = eval_(Task delay {
-          log.info(
-            s"${Thread.currentThread()} - Start pulling records from Kafka.")
+          log.info(s"${Thread.currentThread()} - Start pulling records from Kafka.")
         })
 
         val process: Process[Task, DecodedEvent[K, V]] =
           syncPoll(DecodedEvent(consumer.next)).flatMap { message =>
             Process
               .emit(message)
-              .onComplete(
-                commit(commitOffset, message.messageAndMetadata).drain)
+              .onComplete(commit(commitOffset, message.messageAndMetadata).drain)
           }
 
         begin ++ process
@@ -148,39 +130,71 @@ package object xenomorph {
       commit(msg)
     }
 
-  private def syncPoll[K, V](blockingTask: => DecodedEvent[K, V]): Process[
-    Task,
-    DecodedEvent[K, V]] = {
+  private def syncPoll[K, V](blockingTask: => DecodedEvent[K, V]): Process[Task, DecodedEvent[K, V]] = {
     val t = Task.delay(blockingTask)
 
     Process repeatEval t
   }
 
-  def producer[A](
-      cfg: ProducerConfig,
-      topic: String,
-      keyEncoder: Encoder[A],
-      msgEncoder: Encoder[A]): Sink[Task, A] = {
-    val producer = new Producer[Array[Byte], Array[Byte]](cfg)
+  def producer[V](cfg: ProducerConfig, topic: String, msgEncoder: Encoder[V]): Sink[Task, V] = {
+
+    val prod = producer(cfg, None, msgEncoder)
 
     sink
-      .lift[Task, A] { a: A =>
+      .lift[Task, V] { v =>
         Task.delay[Unit] {
-          log.info(s"${Thread.currentThread()} sending event -  $a")
+          log.debug(s"${Thread.currentThread()} sending event for value=$v")
 
-          producer.send(
-            new KeyedMessage[Array[Byte], Array[Byte]](
-              topic,
-              keyEncoder.toBytes(a),
-              msgEncoder.toBytes(a)))
+          prod.send(new KeyedMessage(topic, v))
         }
       }
       .onComplete {
         Process.suspend {
           log.info("End of stream. Closing producer")
-          producer.close
+          prod.close
           Process.halt
         }
       }
+  }
+
+  def producer[K, V](
+      cfg: ProducerConfig,
+      topic: String,
+      keyEncoder: Encoder[K],
+      msgEncoder: Encoder[V]): Sink[Task, (K, V)] = {
+
+    val prod = producer(cfg, Some(keyEncoder), msgEncoder)
+
+    sink
+      .lift[Task, (K, V)] {
+        case (k, v) =>
+          Task.delay[Unit] {
+            log.debug(s"${Thread.currentThread()} sending event for key=$k and value=$v")
+
+            prod.send(new KeyedMessage(topic, k, v))
+          }
+      }
+      .onComplete {
+        Process.suspend {
+          log.info("End of stream. Closing producer")
+          prod.close
+          Process.halt
+        }
+      }
+  }
+
+  private def producer[V, K](
+      cfg: ProducerConfig,
+      keyEncoder: Option[Encoder[K]],
+      msgEncoder: Encoder[V]): Producer[K, V] = {
+    new Producer[K, V](
+      cfg,
+      new DefaultEventHandler[K, V](
+        cfg,
+        Utils.createObject[Partitioner](cfg.partitionerClass, cfg.props),
+        msgEncoder,
+        keyEncoder.getOrElse(new NullEncoder[K]()),
+        new ProducerPool(cfg))
+    )
   }
 }
