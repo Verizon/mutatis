@@ -12,11 +12,7 @@ class IntegrationSpec extends UnitSpec with EmbeddedKafkaBuilder {
     val data                         = List("a", "b", "c")
     val dataP: Process[Task, String] = Process.emitAll(data)
 
-    val sink = dataP to producer[String](
-      cfg        = producerConfig,
-      topic      = topic,
-      keyEncoder = new StringEncoder,
-      msgEncoder = new StringEncoder)
+    val sink = dataP to producer[String](cfg = producerConfig, topic = topic, msgEncoder = new StringEncoder)
     sink.runLog.run
 
     val read =
