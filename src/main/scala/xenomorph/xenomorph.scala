@@ -183,7 +183,7 @@ package object xenomorph {
       }
   }
 
-  private def producer[V, K](
+  private def producer[K, V](
       cfg: ProducerConfig,
       keyEncoder: Option[Encoder[K]],
       msgEncoder: Encoder[V]): Producer[K, V] = {
