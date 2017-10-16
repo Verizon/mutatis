@@ -38,8 +38,8 @@ object CentralRequirementsPlugin extends AutoPlugin {
       </developers>
     },
     licenses := Seq("Apache-2.0" -> url("https://www.apache.org/licenses/LICENSE-2.0.html")),
-    homepage := Some(url("http://verizon.github.io/xenomorph/")),
-    scmInfo := Some(ScmInfo(url("https://github.com/verizon/xenomorph"),
-                                "git@github.com:verizon/xenomorph.git"))
+    homepage := Some(url("http://verizon.github.io/mutatis/")),
+    scmInfo := Some(ScmInfo(url("https://github.com/verizon/mutatis"),
+                                "git@github.com:verizon/mutatis.git"))
   )
 }

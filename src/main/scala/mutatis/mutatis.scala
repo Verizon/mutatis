@@ -18,11 +18,11 @@ import scalaz.stream._
 import scalaz.stream.time.awakeEvery
 import scalaz.{-\/, \/-}
 
-package object xenomorph {
+package object mutatis {
 
   val log = Logger[this.type]
   private implicit val pool: ScheduledExecutorService =
-    Executors.newSingleThreadScheduledExecutor(daemonThreads("xenomorph-committer"))
+    Executors.newSingleThreadScheduledExecutor(daemonThreads("mutatis-committer"))
 
   private def daemonThreads(name: String) = new ThreadFactory {
     def newThread(r: Runnable) = {

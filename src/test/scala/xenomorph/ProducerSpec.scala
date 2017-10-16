@@ -1,4 +1,4 @@
-package xenomorph
+package mutatis
 
 import kafka.consumer.{Consumer, Whitelist}
 import kafka.serializer._

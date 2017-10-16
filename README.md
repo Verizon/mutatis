@@ -1,9 +1,9 @@
-# Xenomorph
+# mutatis
 
-[![Build Status](https://travis.oncue.verizon.net/iptv/xenomorph.svg?token=sG4K5rLKPjKXqXjsTKAM&branch=master)](https://travis.oncue.verizon.net/iptv/xenomorph)
-[![codecov](https://codecov.oncue.verizon.net/ghe/iptv/xenomorph/branch/master/graph/badge.svg)](https://codecov.oncue.verizon.net/ghe/iptv/xenomorph)
+[![Build Status](https://travis.oncue.verizon.net/iptv/mutatis.svg?token=sG4K5rLKPjKXqXjsTKAM&branch=master)](https://travis.oncue.verizon.net/iptv/mutatis)
+[![codecov](https://codecov.oncue.verizon.net/ghe/iptv/mutatis/branch/master/graph/badge.svg)](https://codecov.oncue.verizon.net/ghe/iptv/mutatis)
 
-Xenomorph provides Scalaz Streams wrapper for Kafka Producer and Consumer
+mutatis provides Scalaz Streams wrapper for Kafka Producer and Consumer
 
 ## Getting Started
 
@@ -24,14 +24,14 @@ Download and start zk and kafka per https://kafka.apache.org/082/documentation.h
 ```
 * Start producer - notice one message is produced every 100 milliseconds:
 ```
-   sbt "test:run-main xenomorph.ExampleProducer"
+   sbt "test:run-main mutatis.ExampleProducer"
 ```
 * Start consumer - notice one message takes 250 milliseconds to process, one consumer is not enough:
 ```
-   sbt "test:run-main xenomorph.ExampleConsumer"
+   sbt "test:run-main mutatis.ExampleConsumer"
 ```
 
-See `src/test/scala/xenomorph/example.scala` for a complete example
+See `src/test/scala/mutatis/example.scala` for a complete example
 
 ## Running the tests
 

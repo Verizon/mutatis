@@ -1,4 +1,4 @@
-package xenomorph
+package mutatis
 
 import kafka.serializer.{DefaultDecoder, StringDecoder, StringEncoder}
 
@@ -7,7 +7,7 @@ import scalaz.stream.Process
 
 class IntegrationSpec extends UnitSpec with EmbeddedKafkaBuilder {
 
-  "Producer should produce events that can be consumed by the xenomorph consumer" in {
+  "Producer should produce events that can be consumed by the mutatis consumer" in {
     val data                         = List("a", "b", "c")
     val dataP: Process[Task, String] = Process.emitAll(data)
 

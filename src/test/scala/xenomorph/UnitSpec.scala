@@ -1,4 +1,4 @@
-package xenomorph
+package mutatis
 
 import org.scalatest._
 

@@ -1,4 +1,4 @@
-package xenomorph
+package mutatis
 
 /**
  * Goal for this example is to demonstrate use case where a producer generates events faster than consumers can
@@ -11,10 +11,10 @@ package xenomorph
  *    ./bin/kafka-topics.sh --create --zookeeper localhost:2181 --replication-factor 1 --partitions 8 --topic test8
  *
  * 3. Start producer - notice one message is produced every 100 milliseconds:
- *    sbt "test:run-main xenomorph.ExampleProducer"
+ *    sbt "test:run-main mutatis.ExampleProducer"
  *
  * 4. Start consumer - notice one message takes 250 milliseconds to process, one consumer is not enough:
- *    sbt "test:run-main xenomorph.ExampleConsumer"
+ *    sbt "test:run-main mutatis.ExampleConsumer"
  *
  * Consideration when setting up number of partitions, consumers, and streams per consumer:
  * - Number of partitions represent the max number of streams you can have across all consumers
@@ -44,7 +44,7 @@ object ExampleProducer extends App {
   implicit val ec: ExecutionContext           = ExecutionContext.fromExecutor(pool)
   implicit val S: Strategy                    = Strategy.Executor(pool)
 
-  val sink: Sink[Task, Duration] = xenomorph.producer(producerCfg, topic, encoder)
+  val sink: Sink[Task, Duration] = mutatis.producer(producerCfg, topic, encoder)
   val producer                   = time.awakeEvery(100 milliseconds) to sink
   producer.run.run
 }
@@ -58,7 +58,7 @@ object ExampleConsumer extends App {
 
   val consumer = merge.mergeN(streams)(
     // Map the internal stream to worker.process so that we commit to kafka only after processing is done
-    xenomorph
+    mutatis
       .consumer(consumerCfg, topic, keyDecoder, decoder, streams)
       .map(stream =>
         stream.evalMap { event =>
