@@ -2,7 +2,6 @@ package xenomorph
 
 import kafka.serializer.{DefaultDecoder, StringDecoder, StringEncoder}
 
-import scalaz.\/-
 import scalaz.concurrent.Task
 import scalaz.stream.Process
 

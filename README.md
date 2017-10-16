@@ -44,15 +44,15 @@ See `src/test/scala/xenomorph/example.scala` for a complete example
 
 ## Versioning
 
-We use [SemVer](http://semver.org/) for versioning. For the versions available, see the [tags on this repository](https://github.com/your/project/tags).
+We use [SemVer](http://semver.org/) for versioning. For the versions available, see the [tags on this repository](./tags).
 
 ## Authors
 
-See the list of [contributors](https://github.oncue.verizon.net/iptv/xenomorph/graphs/contributors) who participated in this project.
+See the list of [contributors](./graphs/contributors) who participated in this project.
 
 ## Acknowledgments
 
-* https://github.oncue.verizon.net/d
-* https://github.oncue.verizon.net/MURTHHA
-* https://github.oncue.verizon.net/rolando
-* https://github.oncue.verizon.net/prateek
+* https://github.com/dougkang
+* https://github.com/haripriyamurthy
+* https://github.com/rolandomanrique
+* https://github.com/kothari-pk

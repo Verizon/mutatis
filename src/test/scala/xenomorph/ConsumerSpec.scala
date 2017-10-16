@@ -4,7 +4,7 @@ import java.util.concurrent.atomic.AtomicReference
 
 import kafka.producer._
 import kafka.serializer.{Decoder, DefaultDecoder, StringDecoder}
-import scala.concurrent.duration.{Duration, _}
+import scala.concurrent.duration._
 import scalaz.{-\/, \/-}
 import scalaz.stream._
 import scalaz.concurrent.Task

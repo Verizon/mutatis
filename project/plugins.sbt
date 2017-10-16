@@ -1,2 +1,1 @@
-addSbtPlugin("verizon.inf.build" % "sbt-verizon"  % "2.7.+")
-
+addSbtPlugin("io.verizon.build" % "sbt-rig" % "5.0.39")

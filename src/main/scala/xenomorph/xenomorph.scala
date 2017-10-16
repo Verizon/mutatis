@@ -7,7 +7,7 @@ import kafka.consumer._
 import kafka.message.MessageAndMetadata
 import kafka.producer.async.DefaultEventHandler
 import kafka.producer._
-import kafka.serializer.{Decoder, DefaultEncoder, Encoder, NullEncoder}
+import kafka.serializer.{Decoder, Encoder, NullEncoder}
 import kafka.utils.Utils
 import treasurechest._
 
@@ -55,6 +55,7 @@ package object xenomorph {
 
     val commitOffset: MessageAndMetadata[K, V] => Unit = msg => {
       commitOffsetMap.put(TopicAndPartition(msg.topic, msg.partition), msg.offset)
+      ()
     }
 
     val stopCommitter: AtomicBoolean = new AtomicBoolean(false)

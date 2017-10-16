@@ -4,7 +4,7 @@ import kafka.consumer.{Consumer, Whitelist}
 import kafka.serializer._
 
 import scalaz.concurrent.Task
-import scalaz.{-\/, \/, \/-}
+import scalaz.{-\/, \/-}
 import scalaz.stream._
 
 class ProducerSpec extends UnitSpec with EmbeddedKafkaBuilder {
