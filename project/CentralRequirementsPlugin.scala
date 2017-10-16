@@ -33,7 +33,27 @@ object CentralRequirementsPlugin extends AutoPlugin {
         <developer>
           <id>fadeddata</id>
           <name>Dustin Withers</name>
-          <url>http://github.com/fadeddata</url>
+          <url>https://github.com/fadeddata</url>
+        </developer>
+        <developer>
+          <id>haripriyamurthy</id>
+          <name>Haripriya Murthy</name>
+          <url>https://github.com/haripriyamurthy</url>
+        </developer>
+        <developer>
+          <id>kothari-pk</id>
+          <name>Prateek Kothari</name>
+          <url>https://github.com/kothari-pk</url>
+        </developer>
+        <developer>
+          <id>rolandomanrique</id>
+          <name>Rolando Manrique</name>
+          <url>https://github.com/rolandomanrique</url>
+        </developer>
+        <developer>
+          <id>dougkang</id>
+          <name>Doug Kang</name>
+          <url>https://github.com/dougkang</url>
         </developer>
       </developers>
     },
