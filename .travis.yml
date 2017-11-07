@@ -1,34 +1,36 @@
 language: scala
 
-scala:
-  - 2.11.11
-
-jdk:
-  - oraclejdk8
+matrix:
+  include:
+    - jdk: oraclejdk8
+      scala: 2.11.8
 
 branches:
   only:
-    - master
+  - master
 
 before_script:
-  - "if [ $TRAVIS_PULL_REQUEST = 'false' ]; then git checkout -qf $TRAVIS_BRANCH; fi; "
-    
-script:
-  - "if [ $TRAVIS_PULL_REQUEST = 'false' ]; then sbt ++$TRAVIS_SCALA_VERSION 'release with-defaults'; else sbt ++$TRAVIS_SCALA_VERSION test coverageReport coverageAggregate; fi"
+  - "if [ $TRAVIS_PULL_REQUEST = 'false' ]; then git checkout -qf $TRAVIS_BRANCH; fi"
 
-after_success:
-  - find \$HOME/.sbt -name "*.lock" | xargs rm
-  - find \$HOME/.ivy2 -name "ivydata-*.properties" | xargs rm
-  - "bash <(curl -s https://codecov.oncue.verizon.net/bash) -u https://codecov.oncue.verizon.net -r $TRAVIS_REPO_SLUG -t b72dac0f-0e72-470b-a528-e893a7f0d92e"
+script:
+  - |
+    if [ $TRAVIS_PULL_REQUEST = 'false' ]; then
+      if [ $RELEASE_ON_PUSH = 'false' ]; then
+        sbt test coverageReport
+      else
+        sbt ++$TRAVIS_SCALA_VERSION 'release with-defaults'
+      fi
+    else
+      sbt test coverageReport
+    fi
+  - find $HOME/.sbt -name "*.lock" | xargs rm
+  - find $HOME/.ivy2 -name "ivydata-*.properties" | xargs rm
 
 cache:
   directories:
-    - \$HOME/.ivy2/cache
-    - \$HOME/.sbt/boot/scala-\$TRAVIS_SCALA_VERSION
+    - $HOME/.ivy2/cache
+    - $HOME/.sbt/boot/scala-$TRAVIS_SCALA_VERSION
 
-notifications:
-   email:
-     recipients:
-       - dustin.withers@one.verizon.com
-     on_success: change
-     on_failure: always
+after_success:
+  - find $HOME/.sbt -name "*.lock" | xargs rm
+  - find $HOME/.ivy2 -name "ivydata-*.properties" | xargs rm
