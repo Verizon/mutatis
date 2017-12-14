@@ -20,9 +20,10 @@ import Dependencies._
 libraryDependencies ++= Seq(
   Kafka,
   KafkaTest,
-  TreasureChest,
   Journal,
-  ScalaTest
+  ScalaTest,
+  Scalaz,
+  ScalazStream
 )
 
 coverageHighlighting := true

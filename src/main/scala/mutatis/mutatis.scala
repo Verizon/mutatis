@@ -25,7 +25,6 @@ import kafka.producer.async.DefaultEventHandler
 import kafka.producer._
 import kafka.serializer.{Decoder, Encoder, NullEncoder}
 import kafka.utils.Utils
-import treasurechest._
 
 import scala.concurrent.duration.{Duration, _}
 import scalaz.concurrent._
@@ -214,4 +213,16 @@ package object mutatis {
         new ProducerPool(cfg))
     )
   }
+
+  implicit class ProcessObjectSyntax(val self: Process.type) extends AnyVal {
+
+    def bracket[F[_], A, O](req: F[A])(release: A => Process[F, Nothing])(
+      rcv: A => Process[F, O]): Process[F, O] = {
+
+      Process.await(req) { a =>
+        rcv(a) onComplete release(a)
+      }
+    }
+  }
+
 }

@@ -56,24 +56,4 @@ class ProducerSpec extends UnitSpec with EmbeddedKafkaBuilder {
       case \/-(_) => fail("should not be success")
     }
   }
-
-  "produce events with key that can be consumed" in {
-    val dataWithKey = data.map(a => (a, a))
-
-    val sink = Process.emitAll(dataWithKey) to producer[String, String](
-        cfg        = producerConfig,
-        topic      = topic,
-        keyEncoder = new StringEncoder,
-        msgEncoder = new StringEncoder)
-    sink.runLog.run
-
-    val consumer = Consumer.create(consumerConfig)
-    val records = consumer
-      .createMessageStreamsByFilter[String, String](Whitelist(topic), 1, new StringDecoder, new StringDecoder)
-      .flatMap { stream =>
-        stream.iterator.take(3).map(a => (a.key, a.message))
-      }
-
-    records shouldEqual (dataWithKey)
-  }
 }
