@@ -1,6 +1,5 @@
 # mutatis
-
-[![Build Status](https://travis.oncue.verizon.net/oss/mutatis.svg?token=sG4K5rLKPjKXqXjsTKAM&branch=master)](https://travis.oncue.verizon.net/iptv/mutatis)
+[![Build Status](https://travis-ci.org/Verizon/mutatis.svg?branch=master)](https://travis-ci.org/Verizon/mutatis)
 
 mutatis provides Scalaz Streams wrapper for Kafka Producer and Consumer
 
