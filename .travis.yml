@@ -2,35 +2,38 @@ language: scala
 
 matrix:
   include:
-    - jdk: oraclejdk8
-      scala: 2.11.8
+  - jdk: oraclejdk8
+    scala: 2.11.8
 
 branches:
   only:
   - master
 
 before_script:
-  - "if [ $TRAVIS_PULL_REQUEST = 'false' ]; then git checkout -qf $TRAVIS_BRANCH; fi"
+- "if [ $TRAVIS_PULL_REQUEST = 'false' ]; then git checkout -qf $TRAVIS_BRANCH; fi"
 
 script:
-  - |
-    if [ $TRAVIS_PULL_REQUEST = 'false' ]; then
-      if [ $RELEASE_ON_PUSH = 'false' ]; then
-        sbt test coverageReport
-      else
-        sbt ++$TRAVIS_SCALA_VERSION 'release with-defaults'
-      fi
-    else
+- |
+  if [ $TRAVIS_PULL_REQUEST = 'false' ]; then
+    if [ $RELEASE_ON_PUSH = 'false' ]; then
       sbt test coverageReport
+    else
+      sbt ++$TRAVIS_SCALA_VERSION 'release with-defaults'
     fi
-  - find $HOME/.sbt -name "*.lock" | xargs rm
-  - find $HOME/.ivy2 -name "ivydata-*.properties" | xargs rm
+  else
+    sbt test coverageReport
+  fi
 
 cache:
   directories:
-    - $HOME/.ivy2/cache
-    - $HOME/.sbt/boot/scala-$TRAVIS_SCALA_VERSION
+  - $HOME/.ivy2/cache
+  - $HOME/.sbt/boot/scala-$TRAVIS_SCALA_VERSION
 
 after_success:
-  - find $HOME/.sbt -name "*.lock" | xargs rm
-  - find $HOME/.ivy2 -name "ivydata-*.properties" | xargs rm
+- find $HOME/.sbt -name "*.lock" | xargs rm
+- find $HOME/.ivy2 -name "ivydata-*.properties" | xargs rm
+
+env:
+  global:
+  - secure: "k9RZkT/qlkpJfqy3OQLobD3GXKhdc4ayDUQ+9uTZ9E5c0NSbeFCMWfLByG7WgyZif25ZHbW8drPXdY/WVS85gH3SVHsqeUSV4I+wmiHoFbae/zE+3OYplo24LItujxV19bLisiVeYABR6Kvg96V42Iv+aC/4s0Iq4tUIh1+INvniXeyX+Wu9tTAW30aZ1z5SQaayZDytrwNGLRFdxLAc7aIhtEpeYbEr7llW2BP2hDfS2viXm9ibXTVwWVJT1aTdm8ENTBVNczNKGrLjnpVydU8wwWuv5qzPGKAxWkhFkQiwsY3GFsRQUX+8O4FhFZD9a/bz9QVixHDxdzSG6O/EjtPtCydv2f/9s0MM4SycdJHeweCXgkLTH0WmzeMicT8cAaZNW4wB6+2Q9BggA0RovQDf8u3ROBnNY4mi4RjAxJkZWM0btYpcr8mV0/YMEvRnwFuM1p9BYVXtKNji4UBF/4DUlbzUGELr09GqhbTIzjYW9ZuQ3WTYFNl20jjtsj6wWkjqRoqYF+MWSEDYfOtHgEDRQ5dZPokefsaMQ7tkCylr0ZECtpE0m6ZDAeZ7pOeiVLiuOmtOiDvoAPDLBJdJormSKWAppb43JXfnvwzH5h3TrDMuO+vckjVWYNzFlCWG14Q0+XaReWk3OPIr5o11Jo/uwrpZPNZE0l/VRWCg14s="
+  - secure: "n3ZN9b4KuWO4vP2w0SpmrDydLmY/Z9adINccjrrK5hBCLmtzWLLil7AekBk0WZEL0gxqpQ5vpAlnVlN8Krn/KxyxvL7G0y93gK3oGU2s/a514pE49MGwpAk0JOEAYZyBoZ/MxrYhWccv+P6HFxbDskEKqB5ymA56VjKH/xdVX5vU7/wEi9RHoqXVun2Fxn+u/mSGOtZ+SGpfD2KpBWsLW0gq7VDsuHKX8NcvH7HSgGzibe4aH6joLCWCv51kO9+tJF0x9NAnnlDzskIP4AsNi8CCMofqHwZaqrzVToS/eaoyWBOfPLd+LisbX5++Yj4u5u8kpdHKFZo0U3dwqeoZ5j4CTUeQPef4vhurhSyrXzpM7T5OurhuxWcvBKVLaXWHa1n8/CSA/OINM14EadVop57YWiveFfHtgnLuDZtZribFR6HgG5N+BRwT8UJNxpFgfnRzfGdcdALMlDTkc4jqyImO+KfGtQef7avNbuxE9257RmwgRo/U8OuGDfh8BJDLa3LWQClorE/II8528L/lfEcvyc3UiIPgEF/zJqHARlo4ywNh7PD1GeaNXi2UIfbBbs/nBy62ccPspLIIOq8wG1kyqk236qyYDA7Wa8w4tGg8J0KpT4OSVRHs97nQ7zD1oBWF4XyYD71Hhjz1ip8OwshWiUkuezDplbvXStBmQUU="
