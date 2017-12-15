@@ -1,7 +1,9 @@
 # mutatis
-[![Build Status](https://travis-ci.org/Verizon/mutatis.svg?branch=master)](https://travis-ci.org/Verizon/mutatis)
 
-mutatis provides Scalaz Streams wrapper for Kafka Producer and Consumer
+[![Build Status](https://travis-ci.org/Verizon/mutatis.svg?branch=master)](https://travis-ci.org/Verizon/mutatis)
+[![Maven Central](https://maven-badges.herokuapp.com/maven-central/io.verizon.mutatis/core_2.11/badge.svg)](https://maven-badges.herokuapp.com/maven-central/io.verizon.mutatis/core_2.11)
+
+Scalaz Streams wrapper for Kafka Producer and Consumer
 
 ## Getting Started
 
@@ -9,16 +11,17 @@ These instructions will get a copy of the project up and running on your local m
 
 ### Prerequisites
 
-Set up kafka server:
-
-
-Download and start zk and kafka per https://kafka.apache.org/082/documentation.html#quickstart
+Set up kafka server. To do this, download and start Zookeeper and Kafka, as per https://kafka.apache.org/082/documentation.html#quickstart
 
 ### Installing
 
 * create a topic called "test8" with 8 partitions:
 ```
-   ./bin/kafka-topics.sh --create --zookeeper localhost:2181 --replication-factor 1 --partitions 8 --topic test8
+   ./bin/kafka-topics.sh --create \
+   --zookeeper localhost:2181 \
+   --replication-factor 1 \
+   --partitions 8 \
+   --topic test8
 ```
 * Start producer - notice one message is produced every 100 milliseconds:
 ```
@@ -46,27 +49,7 @@ We use [SemVer](http://semver.org/) for versioning. For the versions available, 
 
 ## Authors
 
-See the list of [contributors](./graphs/contributors) who participated in this project.
-
-## Acknowledgments
-
 * https://github.com/dougkang
 * https://github.com/haripriyamurthy
 * https://github.com/rolandomanrique
 * https://github.com/kothari-pk
-
-*****************************************
-Copyright 2017  Verizon.
-               
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-****************************************************************
