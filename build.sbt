@@ -26,6 +26,8 @@ libraryDependencies ++= Seq(
   ScalazStream
 )
 
+organization in Global := "io.verizon.mutatis"
+
 coverageHighlighting := true
 
 parallelExecution in Test := false
